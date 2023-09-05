@@ -1,0 +1,94 @@
+{% extends 'Executor/index.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h3 class="mb-4 fw-bold">{{ data.title|title }} - {{ data.difficulty|title }}</h3>
+    <p class='fw-light'>{{ data.description|capfirst }}</p>
+    <form id="codeForm" method="post" action="{% url 'runcode' %}">
+        {% csrf_token %}
+        <div class="btn-group">
+            <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                aria-expanded="false">
+                Language
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item language-option" data-language="Python" href="#">Python</a></li>
+                <li><a class="dropdown-item language-option" data-language="Java" href="#">Java</a></li>
+                <li><a class="dropdown-item language-option" data-language="C++17" href="#">C++17</a></li>
+            </ul>
+        </div>
+        <input type="hidden" id="selectedLanguage" name="selected_language" value="">
+        <input type="hidden" id = "id1" name = 'problemid' value= "{{data.id}}"> 
+        <div class="form-group mt-2">
+            <textarea class="form-control" id="code" rows="10" placeholder="Write your code here"
+                name="code"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary mt-2">Run Code</button>
+    </form>
+
+    <div class="mt-4">
+        <h4 class="text-secondary">Output</h4>
+        <p id="output"></p>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const codeForm = document.getElementById("codeForm");
+        const outputElement = document.getElementById("output");
+        const dropdownOptions = document.querySelectorAll(".language-option");
+     
+
+        dropdownOptions.forEach(option => {
+            option.addEventListener("click", function (event) {
+                event.preventDefault();
+                const selectedLanguage = option.getAttribute("data-language");
+                document.querySelector("#selectedLanguage").value = selectedLanguage;
+                const dropdownButton = option.closest(".btn-group").querySelector(".btn");
+                dropdownButton.innerText = selectedLanguage;
+            });
+        });
+
+        codeForm.addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            const formData = new FormData(codeForm);
+
+            fetch("{% url 'runcode' %}", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": getCookie("csrftoken"),
+                },
+                body: formData,
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Update the output element with the received result
+                    outputElement.textContent = data.result;
+                    console.log('hii')
+                    console.log(data.result)
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                });
+        });
+
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== "") {
+                var cookies = document.cookie.split(";");
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === name + "=") {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    });
+</script>
+
+
+{% endblock content %}
